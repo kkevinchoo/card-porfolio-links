@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeta Holográfica VIP con Glow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0415, #1a0630);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            padding: 20px;
+            cursor: none;
+        }
+        
+        /* Glow que sigue al cursor */
+        .cursor-glow {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            filter: blur(25px);
+            opacity: 0.5;
+            transition: transform 0.1s ease-out, opacity 0.3s ease;
+        }
+        
+        .scene {
+            width: 300px;
+            height: 450px;
+            perspective: 1000px;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .card {
+            width: 100%;
+            height: 100%;
+            perspective: 1000px;
+            cursor: pointer;
+            animation: cardEntrance 1.5s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card:not(.flipped):hover .card-inner {
+            transform: rotateY(0deg) rotate3d(0.5, -0.2, 0, 15deg) translateY(-10px);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .card-front {
+            transform: rotateY(0deg);
+            z-index: 2;
+            background: linear-gradient(135deg, #2a0b42, #4a148c);
+            border: 2px solid #8a2be2;
+            box-shadow: 0 0 30px rgba(132, 0, 255, 0.7);
+            position: relative;
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, #1a0630, #380c6e);
+            transform: rotateY(180deg);
+            border: 2px solid #8a2be2;
+            box-shadow: 0 0 30px rgba(132, 0, 255, 0.7);
+        }
+        
+        /* Efecto holográfico mejorado */
+        .holographic-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, 
+                rgba(138, 43, 226, 0.1) 0%, 
+                rgba(75, 0, 130, 0.2) 20%, 
+                rgba(186, 85, 211, 0.1) 40%, 
+                rgba(123, 104, 238, 0.3) 60%, 
+                rgba(106, 90, 205, 0.1) 80%, 
+                rgba(138, 43, 226, 0.2) 100%
+            );
+            background-size: 200% 200%;
+            opacity: 0.6;
+            z-index: 0;
+            animation: hologram 8s infinite linear;
+            pointer-events: none;
+        }
+        
+        .holographic-highlight {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+            opacity: 0;
+            animation: highlightMove 10s infinite linear;
+            pointer-events: none;
+        }
+        
+        .card:hover .holographic-highlight {
+            opacity: 0.4;
+        }
+        
+        .card-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+        
+        .vip-badge {
+            background: linear-gradient(45deg, #ff00cc, #3333ff);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-size: 18px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(255, 0, 204, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #bb86fc;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(187, 134, 252, 0.5);
+            background: linear-gradient(45deg, #7b68ee, #9370db);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .profile-pic i {
+            font-size: 60px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+        
+        .name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #bb86fc, #03dac6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+        }
+        
+        .title {
+            font-size: 16px;
+            color: #e0e0e0;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+        
+        .flip-hint {
+            position: absolute;
+            color: #bb86fc;
+            font-size: 14px;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+            left: 0;
+            width:100%;
+        }
+        
+        /* Parte trasera de la tarjeta */
+        .back-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #bb86fc, #03dac6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(187, 134, 252, 0.3);
+        }
+        
+        .social-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        .social-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            text-decoration: none;
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(187, 134, 252, 0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .social-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(187, 134, 252, 0.2), transparent);
+            transition: 0.5s;
+            z-index: -1;
+        }
+        
+        .social-link:hover::before {
+            left: 100%;
+        }
+        
+        .social-link:hover {
+            background: rgba(187, 134, 252, 0.15);
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(187, 134, 252, 0.3);
+            color: #ffffff;
+        }
+        
+        .social-link i {
+            font-size: 24px;
+            width: 30px;
+        }
+        
+        .github { color: #bb86fc; }
+        .linkedin { color: #03dac6; }
+        .email { color: #ff79c6; }
+        .portfolio { color: #bd93f9; }
+        
+        /* Animaciones */
+        @keyframes cardEntrance {
+            0% {
+                transform: translateY(50px) scale(0.9);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes hologram {
+            0% {
+                background-position: 0% 0%;
+            }
+            100% {
+                background-position: 200% 200%;
+            }
+        }
+        
+        @keyframes highlightMove {
+            0% {
+                transform: translate(-25%, -25%);
+            }
+            25% {
+                transform: translate(-75%, 0%);
+            }
+            50% {
+                transform: translate(-25%, 25%);
+            }
+            75% {
+                transform: translate(25%, 0%);
+            }
+            100% {
+                transform: translate(-25%, -25%);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        /* Partículas de fondo */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(187, 134, 252, 0.3);
+            box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            color: #bb86fc;
+            font-size: 14px;
+            text-align: center;
+            width: 100%;
+            opacity: 0.7;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+    <!-- Glow que sigue al cursor -->
+    <div class="cursor-glow" id="cursorGlow"></div>
+    
+    <!-- Partículas de fondo -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="scene">
+        <div class="card" id="card">
+            <div class="card-inner">
+                <!-- Parte frontal -->
+                <div class="card-face card-front">
+                    <div class="holographic-highlight"></div>
+                    
+                    <div class="card-content">
+                        <div class="vip-badge">Portafolio</div>
+                        <div class="profile-pic">
+                            <img src="https://pub-dcd8e3f50ea343c3bf8cdfab79fa24f1.r2.dev/1679416167992.jpeg">
+                        </div>
+                        <h1 class="name">Kevith Beltran</h1>
+                        <p class="title">Desarrollador Full Stack</p>
+                        <div class="flip-hint">Haz clic para ver mis redes</div>
+                    </div>
+                </div>
+                
+                <!-- Parte trasera -->
+                <div class="card-face card-back">
+                    <div class="holographic-highlight"></div>
+                    
+                    <div class="card-content">
+                        <h2 class="back-title">Mis Redes</h2>
+                        <div class="social-links">
+                            <a href="https://github.com/kkevinchoo" target="_blank" class="social-link">
+                                <i class="fab fa-github github"></i>
+                                <span>GitHub /kkevinchoo</span>
+                            </a>
+                            <a href="https://www.linkedin.com/in/kevith/" target="_blank" class="social-link">
+                                <i class="fab fa-linkedin linkedin"></i>
+                                <span>LinkedIn /in/kevith</span>
+                            </a>
+                            <a href="mailto:kkevinchoo@gmail.com" class="social-link">
+                                <i class="fas fa-envelope email"></i>
+                                <span>contacto@kevith.com</span>
+                            </a>
+                            <a href="https://kevith.com/" class="social-link">
+                                <i class="fas fa-globe portfolio"></i>
+                                <span>Ver Portafolio Completo</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="instructions">Haz clic en la tarjeta para voltearla</div>
+    
+    <script>
+        // Crear el glow que sigue al cursor
+        const cursorGlow = document.getElementById('cursorGlow');
+        
+        // Mover el glow con el cursor
+        document.addEventListener('mousemove', (e) => {
+            cursorGlow.style.left = `${e.clientX}px`;
+            cursorGlow.style.top = `${e.clientY}px`;
+            
+            // Efecto sutil cuando el cursor está sobre la tarjeta
+            if (e.target.closest('.card')) {
+                cursorGlow.style.opacity = '0.7';
+                cursorGlow.style.width = '250px';
+                cursorGlow.style.height = '250px';
+            } else {
+                cursorGlow.style.opacity = '0.4';
+                cursorGlow.style.width = '200px';
+                cursorGlow.style.height = '200px';
+            }
+        });
+        
+        // Voltear la tarjeta al hacer clic
+        const card = document.getElementById('card');
+        card.addEventListener('click', () => {
+            card.classList.toggle('flipped');
+        });
+        
+        // Crear partículas para el fondo
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Tamaño y posición aleatorios
+                const size = Math.random() * 10 + 2;
+                const posX = Math.random() * 100;
+                const delay = Math.random() * 15;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}%`;
+                particle.style.bottom = `-${size}px`;
+                particle.style.animationDelay = `${delay}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Inicializar partículas al cargar
+        window.addEventListener('load', createParticles);
+        
+        // Efecto de movimiento holográfico al pasar el mouse
+        document.querySelectorAll('.card-face').forEach(face => {
+            face.addEventListener('mousemove', e => {
+                const rect = face.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const highlight = face.querySelector('.holographic-highlight');
+                highlight.style.transform = `translate(${-x}px, ${-y}px)`;
+            });
+        });
+    </script>
+</body>
+</html>
